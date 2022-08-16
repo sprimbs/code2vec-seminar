@@ -18,16 +18,17 @@
 #   recommended to use a multi-core machine for the preprocessing 
 #   step and set this value to the number of cores.
 # PYTHON - python3 interpreter alias.
-TRAIN_DIR=my_train_dir
-VAL_DIR=my_val_dir
-TEST_DIR=my_test_dir
+TRAIN_DIR=./example_dataset/train
+VAL_DIR=./example_dataset/val
+TEST_DIR=./example_dataset/test
 DATASET_NAME=my_dataset
 MAX_CONTEXTS=200
 WORD_VOCAB_SIZE=1301136
 PATH_VOCAB_SIZE=911417
 TARGET_VOCAB_SIZE=261245
-NUM_THREADS=64
-PYTHON=python3
+NUM_THREADS=4
+PYTHON=~/.cache/pypoetry/virtualenvs/code2vec-985uG9Tn-py3.8/bin/python3.8
+
 ###########################################################
 
 TRAIN_DATA_FILE=${DATASET_NAME}.train.raw.txt
