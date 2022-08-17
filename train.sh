@@ -7,7 +7,7 @@
 #   will be evaluated after each training iteration. If you wish to test
 #   on the final (held-out) test set, change 'val' to 'test'.
 type=java14m
-dataset_name=my_dataset
+dataset_name=dataset
 data_dir=data/${dataset_name}
 data=${data_dir}/${dataset_name}
 test_data=${data_dir}/${dataset_name}.val.c2v

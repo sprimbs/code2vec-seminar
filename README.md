@@ -23,4 +23,7 @@ bash preprocess.sh
 
 ## Training
 
-
+Run 
+```
+bash train.sh
+```
