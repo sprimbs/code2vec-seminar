@@ -15,7 +15,6 @@ def get_all_files(path: str) -> [str]:
 
 def split(path: str) -> None:
     all_java_files = get_all_files(path)
-    print(all_java_files)
     random.shuffle(all_java_files)
     training = all_java_files[:int(len(all_java_files) * 0.8)]
     validation = all_java_files[int(len(all_java_files) * 0.8):int(len(all_java_files) * 0.9)]
