@@ -18,10 +18,10 @@
 #   recommended to use a multi-core machine for the preprocessing 
 #   step and set this value to the number of cores.
 # PYTHON - python3 interpreter alias.
-TRAIN_DIR=./example_dataset/train
-VAL_DIR=./example_dataset/val
-TEST_DIR=./example_dataset/test
-DATASET_NAME=my_dataset
+TRAIN_DIR=JavaExtractor/JPredict/data
+VAL_DIR=JavaExtractor/JPredict/data
+TEST_DIR=JavaExtractor/JPredict/data
+DATASET_NAME=dataset
 MAX_CONTEXTS=200
 WORD_VOCAB_SIZE=1301136
 PATH_VOCAB_SIZE=911417
