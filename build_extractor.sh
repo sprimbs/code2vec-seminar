@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-cd JavaExtractor/JPredict
-mvn clean package
-cd ../../
+cd ./preprocessing-toolbox
+./gradlew runnableJar
+cd ../

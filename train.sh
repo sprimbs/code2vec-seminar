@@ -7,12 +7,12 @@
 #   will be evaluated after each training iteration. If you wish to test
 #   on the final (held-out) test set, change 'val' to 'test'.
 type=java14m
-dataset_name=dataset
+dataset_name=my_dataset
 data_dir=data/${dataset_name}
 data=${data_dir}/${dataset_name}
 test_data=${data_dir}/${dataset_name}.val.c2v
 model_dir=models/${type}
-python=~/.cache/pypoetry/virtualenvs/code2vec-985uG9Tn-py3.8/bin/python3.8
+python=python
 
 
 mkdir -p ${model_dir}
