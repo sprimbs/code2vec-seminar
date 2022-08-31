@@ -59,4 +59,3 @@ To manually examine a trained model run:
 poetry run python predict.py --load [path to a trained model]
 ```
 
-The script waits for parsed code2vec input from the toolbox. After that hit enter and see the predictions.
