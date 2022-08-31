@@ -1,0 +1,3 @@
+[submodule "./preprocessing-toolbox"]
+	path = ./preprocessing-toolbox
+	url = https://gitlab.infosun.fim.uni-passau.de/se2/deepcode/preprocessing-toolbox.git

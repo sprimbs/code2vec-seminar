@@ -18,35 +18,36 @@
 #   recommended to use a multi-core machine for the preprocessing 
 #   step and set this value to the number of cores.
 # PYTHON - python3 interpreter alias.
-TRAIN_DIR=JavaExtractor/JPredict/data
-VAL_DIR=JavaExtractor/JPredict/data
-TEST_DIR=JavaExtractor/JPredict/data
-DATASET_NAME=dataset
+TRAIN_DIR=./dataset/train
+VAL_DIR=./dataset/val
+TEST_DIR=./dataset/test
+DATASET_NAME=my_dataset
 MAX_CONTEXTS=200
 WORD_VOCAB_SIZE=1301136
 PATH_VOCAB_SIZE=911417
 TARGET_VOCAB_SIZE=261245
 NUM_THREADS=4
-PYTHON=~/.cache/pypoetry/virtualenvs/code2vec-985uG9Tn-py3.8/bin/python3.8
+PYTHON=python
+JAVA=java
 
 ###########################################################
 
 TRAIN_DATA_FILE=${DATASET_NAME}.train.raw.txt
 VAL_DATA_FILE=${DATASET_NAME}.val.raw.txt
 TEST_DATA_FILE=${DATASET_NAME}.test.raw.txt
-EXTRACTOR_JAR=JavaExtractor/JPredict/target/JavaExtractor-0.0.1-SNAPSHOT.jar
+JAR=preprocessing-toolbox/build/libs/preprocessing-toolbox-1.0-SNAPSHOT.jar
 
 mkdir -p data
 mkdir -p data/${DATASET_NAME}
 
 echo "Extracting paths from validation set..."
-${PYTHON} JavaExtractor/extract.py --dir ${VAL_DIR} --max_path_length 8 --max_path_width 2 --num_threads ${NUM_THREADS} --jar ${EXTRACTOR_JAR} > ${VAL_DATA_FILE}
+${JAVA} -jar ${JAR} code2vec -s ${VAL_DIR} -o ${VAL_DATA_FILE} -f -l 8 -w 2
 echo "Finished extracting paths from validation set"
 echo "Extracting paths from test set..."
-${PYTHON} JavaExtractor/extract.py --dir ${TEST_DIR} --max_path_length 8 --max_path_width 2 --num_threads ${NUM_THREADS} --jar ${EXTRACTOR_JAR} > ${TEST_DATA_FILE}
+${JAVA} -jar ${JAR} code2vec -s ${TEST_DIR} -o ${TEST_DATA_FILE} -f -l 8 -w 2
 echo "Finished extracting paths from test set"
 echo "Extracting paths from training set..."
-${PYTHON} JavaExtractor/extract.py --dir ${TRAIN_DIR} --max_path_length 8 --max_path_width 2 --num_threads ${NUM_THREADS} --jar ${EXTRACTOR_JAR} | shuf > ${TRAIN_DATA_FILE}
+${JAVA} -jar ${JAR} code2vec -s ${TRAIN_DIR} -o ${TRAIN_DATA_FILE} -f  -l 8 -w 2
 echo "Finished extracting paths from training set"
 
 TARGET_HISTOGRAM_FILE=data/${DATASET_NAME}/${DATASET_NAME}.histo.tgt.c2v
