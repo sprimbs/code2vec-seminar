@@ -16,7 +16,23 @@ def predict(model: Code2VecModel, ast_path: str) -> None:
 
 
 def parse_result_for_plugin(raw_prediction: ModelPredictionResults) -> list:
-    return list(map(list, zip(raw_prediction.topk_predicted_words, raw_prediction.topk_predicted_words_scores)))
+    return list(map(list, zip(map(parseTokensToMethodName, raw_prediction.topk_predicted_words), 
+        raw_prediction.topk_predicted_words_scores)))
+
+
+def parseTokensToMethodName(tokens: str) -> str:
+    methodName = ""
+    for i, token in enumerate(tokens.split("|")):
+        if token and i:
+            chars = list(token)
+            chars[0] = chars[0].upper()
+            token = "".join(chars)
+        methodName += token
+    return methodName
+
+
+def padInput(input: str, config: Config) -> str:
+    return input + " " * (config.MAX_CONTEXTS - input.count(" "))
 
 
 if __name__ == "__main__":
@@ -25,4 +41,5 @@ if __name__ == "__main__":
     model = load_model(config)
 
     while True:
-        predict(model, input())
+        raw_input = padInput(input(), config)
+        predict(model, raw_input)
