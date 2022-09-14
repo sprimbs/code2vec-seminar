@@ -50,3 +50,12 @@ Run
 ```bash
 bash train.sh
 ```
+
+## Manual Prediction
+
+To manually examine a trained model run:
+
+```bash
+poetry run python predict.py --load [path to a trained model]
+```
+
