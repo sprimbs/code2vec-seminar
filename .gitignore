@@ -11,3 +11,4 @@
 **/dataset/test/**
 **dataset/dataset.tar**
 **__pycahche__/**
+./preprocessing-toolbox/*
