@@ -8,7 +8,9 @@
 ## Cloning
 
 ```bash
-git clone --recurse-submodules https://gitlab.infosun.fim.uni-passau.de/se2/deepcode/code2vec.git
+git clone https://gitlab.infosun.fim.uni-passau.de/se2/deepcode/code2vec.git
+cd ./code2vec/
+git clone https://gitlab.infosun.fim.uni-passau.de/se2/deepcode/preprocessing-toolbox.git
 ```
 
 ## Initialization
