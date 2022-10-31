@@ -1,3 +1,4 @@
+import random
 from model_base import ModelPredictionResults
 from tensorflow_model import Code2VecModel
 from config import Config
@@ -34,6 +35,10 @@ def parseTokensToMethodName(tokens: str) -> str:
 def padInput(input: str, config: Config) -> str:
     return input + " " * (config.MAX_CONTEXTS - input.count(" "))
 
+def shortenInput(input: str, config: Config) -> str:
+    split = input.split(" ")
+    random.shuffle(split)
+    return " ".join(split[:min(config.MAX_CONTEXTS + 1, len(split))])
 
 if __name__ == "__main__":
     config = Config(set_defaults=True, load_from_args=True, verify=True)
@@ -41,5 +46,5 @@ if __name__ == "__main__":
     model = load_model(config)
 
     while True:
-        raw_input = padInput(input(), config)
+        raw_input = shortenInput(padInput(input(), config), config)
         predict(model, raw_input)
