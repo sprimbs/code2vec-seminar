@@ -225,6 +225,7 @@ class Code2VecModel(Code2VecModelBase):
 
             logits = tf.matmul(code_vectors, targets_vocab, transpose_b=True)
             batch_size = tf.cast(tf.shape(input_tensors.target_index)[0], dtype=tf.float32)
+
             loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(
                 labels=tf.reshape(input_tensors.target_index, [-1]),
                 logits=logits)) / batch_size

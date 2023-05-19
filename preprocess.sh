@@ -18,37 +18,43 @@
 #   recommended to use a multi-core machine for the preprocessing 
 #   step and set this value to the number of cores.
 # PYTHON - python3 interpreter alias.
-TRAIN_DIR=./dataset/train
-VAL_DIR=./dataset/val
-TEST_DIR=./dataset/test
-DATASET_NAME=my_dataset
+
+
 MAX_CONTEXTS=200
 WORD_VOCAB_SIZE=1301136
 PATH_VOCAB_SIZE=911417
 TARGET_VOCAB_SIZE=261245
-NUM_THREADS=4
+
 PYTHON=python
 JAVA=java
+DATASET_NAME=sprites
+RAW_DATA_DIR=raw_data/${DATASET_NAME}
 
 ###########################################################
 
-TRAIN_DATA_FILE=${DATASET_NAME}.train.raw.txt
-VAL_DATA_FILE=${DATASET_NAME}.val.raw.txt
-TEST_DATA_FILE=${DATASET_NAME}.test.raw.txt
-JAR=preprocessing-toolbox/build/libs/preprocessing-toolbox-1.0-SNAPSHOT.jar
+TRAIN_DATA_FILE=data/${DATASET_NAME}/train.c2v
+VAL_DATA_FILE=data/${DATASET_NAME}/validation.c2v
+TEST_DATA_FILE=data/${DATASET_NAME}/test.c2v
+JAR=litterbox/target/Litterbox-1.9-SNAPSHOT.jar
+TMP=data/tmp
+TMP_DATA_DIR=${TMP}/${DATASET_NAME}
+PREPROCESSED_DATA_DIR=data/${DATASET_NAME}
+
 
 mkdir -p data
-mkdir -p data/${DATASET_NAME}
+mkdir -p ${PREPROCESSED_DATA_DIR}
+mkdir -p ${TMP_DATA_DIR}
 
-echo "Extracting paths from validation set..."
-${JAVA} -jar ${JAR} code2vec -s ${VAL_DIR} -o ${VAL_DATA_FILE} -f -l 8 -w 2
-echo "Finished extracting paths from validation set"
-echo "Extracting paths from test set..."
-${JAVA} -jar ${JAR} code2vec -s ${TEST_DIR} -o ${TEST_DATA_FILE} -f -l 8 -w 2
-echo "Finished extracting paths from test set"
-echo "Extracting paths from training set..."
-${JAVA} -jar ${JAR} code2vec -s ${TRAIN_DIR} -o ${TRAIN_DATA_FILE} -f  -l 8 -w 2
-echo "Finished extracting paths from training set"
+
+
+#for entry in "${RAW_DATA_DIR}"/*
+#do
+#  ${JAVA} -jar ${JAR} code2vec --path="${entry}" --output="${TMP_DATA_DIR}/${entry##*/}" -w
+#done
+
+${PYTHON} dataset/relabel.py --path=${TMP_DATA_DIR} --output=${PREPROCESSED_DATA_DIR}
+# rm -rf ${TMP}
+
 
 TARGET_HISTOGRAM_FILE=data/${DATASET_NAME}/${DATASET_NAME}.histo.tgt.c2v
 ORIGIN_HISTOGRAM_FILE=data/${DATASET_NAME}/${DATASET_NAME}.histo.ori.c2v
@@ -63,9 +69,8 @@ ${PYTHON} preprocess.py --train_data ${TRAIN_DATA_FILE} --test_data ${TEST_DATA_
   --max_contexts ${MAX_CONTEXTS} --word_vocab_size ${WORD_VOCAB_SIZE} --path_vocab_size ${PATH_VOCAB_SIZE} \
   --target_vocab_size ${TARGET_VOCAB_SIZE} --word_histogram ${ORIGIN_HISTOGRAM_FILE} \
   --path_histogram ${PATH_HISTOGRAM_FILE} --target_histogram ${TARGET_HISTOGRAM_FILE} --output_name data/${DATASET_NAME}/${DATASET_NAME}
-    
-# If all went well, the raw data files can be deleted, because preprocess.py creates new files 
-# with truncated and padded number of paths for each example.
-rm ${TRAIN_DATA_FILE} ${VAL_DATA_FILE} ${TEST_DATA_FILE} ${TARGET_HISTOGRAM_FILE} ${ORIGIN_HISTOGRAM_FILE} \
-  ${PATH_HISTOGRAM_FILE}
+
+#  all went well, the raw data files can be deleted, because preprocess.py creates new files
+#with truncated and padded number of paths for each example.
+# rm ${TRAIN_DATA_FILE} ${VAL_DATA_FILE} ${TEST_DATA_FILE} ${TARGET_HISTOGRAM_FILE} ${ORIGIN_HISTOGRAM_FILE}  ${PATH_HISTOGRAM_FILE}
 
