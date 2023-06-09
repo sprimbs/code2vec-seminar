@@ -27,7 +27,7 @@ TARGET_VOCAB_SIZE=261245
 
 PYTHON=python
 JAVA=java
-DATASET_NAME=sprites
+DATASET_NAME=gender
 RAW_DATA_DIR=raw_data/${DATASET_NAME}
 
 ###########################################################
@@ -47,12 +47,12 @@ mkdir -p ${TMP_DATA_DIR}
 
 
 
-#for entry in "${RAW_DATA_DIR}"/*
-#do
-#  ${JAVA} -jar ${JAR} code2vec --path="${entry}" --output="${TMP_DATA_DIR}/${entry##*/}" -w
-#done
+for entry in "${RAW_DATA_DIR}"/*
+do
+  ${JAVA} -jar ${JAR} code2vec --path="${entry}" --output="${TMP_DATA_DIR}/${entry##*/}" -s
+done
 
-${PYTHON} dataset/relabel.py --path=${TMP_DATA_DIR} --output=${PREPROCESSED_DATA_DIR}
+${PYTHON} dataset/relabel.py --path=${TMP_DATA_DIR} --output=${PREPROCESSED_DATA_DIR} --relabel
 # rm -rf ${TMP}
 
 
