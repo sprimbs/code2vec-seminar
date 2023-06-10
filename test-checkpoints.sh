@@ -1,6 +1,8 @@
 DATASET_NAME=$1
 MODEL_NAME=$2
 EVALUATION_SET=$3
+START=$4
+END=$5
 
 TEST_STATS=test-stats
 SAVE_DIR=$TEST_STATS/$DATASET_NAME
@@ -10,7 +12,7 @@ EXPORT_FILE_PATH=$SAVE_DIR/metrics.txt
 EXPORT_CSV_FILE_PATH=$MODEL/metrics-$EVALUATION_SET.csv
 
 mkdir -p "$SAVE_DIR"
-for i in {1..5}
+for i in $(eval echo "{$START..$END}")
 do
    echo "==================="
    echo "|| Checkpoint $i: ||"

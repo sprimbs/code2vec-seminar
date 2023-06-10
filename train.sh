@@ -6,7 +6,7 @@
 # test_data: by default, points to the validation set, since this is the set that
 #   will be evaluated after each training iteration. If you wish to test
 #   on the final (held-out) test set, change 'val' to 'test'.
-type=gender/pre-trained
+type=gender/pre-trained-
 dataset_name=gender
 data_dir=data/${dataset_name}
 data=${data_dir}/${dataset_name}
