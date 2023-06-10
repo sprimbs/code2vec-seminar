@@ -1,3 +1,5 @@
+import json
+
 import tensorflow as tf
 import numpy as np
 import time
@@ -98,6 +100,8 @@ class Code2VecModel(Code2VecModelBase):
                         nr_epochs=epoch_num,
                         evaluation_results=evaluation_results_str
                     ))
+                    if epoch_num == self.config.NUM_TRAIN_EPOCHS:
+                        break
         except tf.errors.OutOfRangeError:
             pass  # The reader iterator is exhausted and have no more batches to produce.
 

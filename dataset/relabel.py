@@ -69,7 +69,7 @@ def _build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path", type=str, required=True)
     parser.add_argument("--output", type=str,required=True)
     parser.add_argument("--ending", type=str,default='c2v')
-    parser.add_argument("--relabel",type=bool,default=False)
+    parser.add_argument("--relabel",action="store_true")
     return parser
 
 if __name__ == "__main__":
