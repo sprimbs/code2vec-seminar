@@ -27,18 +27,19 @@ TARGET_VOCAB_SIZE=261245
 
 PYTHON=python
 JAVA=java
-DATASET_NAME=gender
+DATASET_NAME=sprites
+DATASET_PART=$DATASET_NAME/100000
 RAW_DATA_DIR=raw_data/${DATASET_NAME}
 
 ###########################################################
 
-TRAIN_DATA_FILE=data/${DATASET_NAME}/train.c2v
-VAL_DATA_FILE=data/${DATASET_NAME}/validation.c2v
-TEST_DATA_FILE=data/${DATASET_NAME}/test.c2v
+TRAIN_DATA_FILE=data/${DATASET_PART}/train.c2v
+VAL_DATA_FILE=data/${DATASET_PART}/validation.c2v
+TEST_DATA_FILE=data/${DATASET_PART}/test.c2v
 JAR=litterbox/target/Litterbox-1.9-SNAPSHOT.jar
 TMP=data/tmp
 TMP_DATA_DIR=${TMP}/${DATASET_NAME}
-PREPROCESSED_DATA_DIR=data/${DATASET_NAME}
+PREPROCESSED_DATA_DIR=data/${DATASET_PART}
 
 
 mkdir -p data
@@ -47,18 +48,18 @@ mkdir -p ${TMP_DATA_DIR}
 
 
 
-for entry in "${RAW_DATA_DIR}"/*
-do
-  ${JAVA} -jar ${JAR} code2vec --path="${entry}" --output="${TMP_DATA_DIR}/${entry##*/}" -s
-done
+#for entry in "${RAW_DATA_DIR}"/*
+#do
+#  ${JAVA} -jar ${JAR} code2vec --path="${entry}" --output="${TMP_DATA_DIR}/${entry##*/}" -s
+#done
 
-${PYTHON} dataset/relabel.py --path=${TMP_DATA_DIR} --output=${PREPROCESSED_DATA_DIR} --relabel
+${PYTHON} dataset/relabel.py --path=${TMP_DATA_DIR} --output=${PREPROCESSED_DATA_DIR} --count=100000
 # rm -rf ${TMP}
 
 
-TARGET_HISTOGRAM_FILE=data/${DATASET_NAME}/${DATASET_NAME}.histo.tgt.c2v
-ORIGIN_HISTOGRAM_FILE=data/${DATASET_NAME}/${DATASET_NAME}.histo.ori.c2v
-PATH_HISTOGRAM_FILE=data/${DATASET_NAME}/${DATASET_NAME}.histo.path.c2v
+TARGET_HISTOGRAM_FILE=data/${DATASET_PART}/${DATASET_NAME}.histo.tgt.c2v
+ORIGIN_HISTOGRAM_FILE=data/${DATASET_PART}/${DATASET_NAME}.histo.ori.c2v
+PATH_HISTOGRAM_FILE=data/${DATASET_PART}/${DATASET_NAME}.histo.path.c2v
 
 echo "Creating histograms from the training data"
 cat ${TRAIN_DATA_FILE} | cut -d' ' -f1 | awk '{n[$0]++} END {for (i in n) print i,n[i]}' > ${TARGET_HISTOGRAM_FILE}
@@ -68,7 +69,7 @@ cat ${TRAIN_DATA_FILE} | cut -d' ' -f2- | tr ' ' '\n' | cut -d',' -f2 | awk '{n[
 ${PYTHON} preprocess.py --train_data ${TRAIN_DATA_FILE} --test_data ${TEST_DATA_FILE} --val_data ${VAL_DATA_FILE} \
   --max_contexts ${MAX_CONTEXTS} --word_vocab_size ${WORD_VOCAB_SIZE} --path_vocab_size ${PATH_VOCAB_SIZE} \
   --target_vocab_size ${TARGET_VOCAB_SIZE} --word_histogram ${ORIGIN_HISTOGRAM_FILE} \
-  --path_histogram ${PATH_HISTOGRAM_FILE} --target_histogram ${TARGET_HISTOGRAM_FILE} --output_name data/${DATASET_NAME}/${DATASET_NAME}
+  --path_histogram ${PATH_HISTOGRAM_FILE} --target_histogram ${TARGET_HISTOGRAM_FILE} --output_name data/${DATASET_PART}/${DATASET_NAME}
 
 #  all went well, the raw data files can be deleted, because preprocess.py creates new files
 #with truncated and padded number of paths for each example.

@@ -220,7 +220,7 @@ class Code2VecModel(Code2VecModelBase):
                 trainable=True)
             attention_param = tf.compat.v1.get_variable(
                 'ATTENTION',
-                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=False)
+                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=True)
             paths_vocab = tf.compat.v1.get_variable(
                 self.vocab_type_to_tf_variable_name_mapping[VocabType.Path],
                 shape=(self.vocabs.path_vocab.size, self.config.PATH_EMBEDDINGS_SIZE), dtype=tf.float32,

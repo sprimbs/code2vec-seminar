@@ -8,9 +8,12 @@ import random
 
 def main(args):
     lines = []
+    i = 0
+    count = args.count if args.count is not None else len(lines)
     for (dirpath, dirnames, filenames) in walk(args.path):
         for file_name in filenames:
             with open(Path(dirpath) / Path(file_name), 'r') as file:
+                i+= 1
                 for line in file.readlines():
                     if(args.relabel):
                         tokens = line.split(" ")
@@ -20,7 +23,10 @@ def main(args):
                         lines.append(' '.join(tokens))
                     else:
                         lines.append(line)
-    count = len(lines)
+                sys.stdout.write("\rTotal: {:.2f}%".format(i / count * 100))
+                if args.count is not None and i == args.count:
+                    pass
+                break
     set_type = []
     for index in range(count):
         if index < 0.8 * count:
