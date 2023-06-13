@@ -44,7 +44,7 @@ class Config:
         return parser
 
     def set_defaults(self):
-        self.NUM_TRAIN_EPOCHS = 50
+        self.NUM_TRAIN_EPOCHS = 1
         self.SAVE_EVERY_EPOCHS = 1
         self.TRAIN_BATCH_SIZE = 1024
         self.TEST_BATCH_SIZE = self.TRAIN_BATCH_SIZE
@@ -83,7 +83,7 @@ class Config:
         self.SAVE_T2V = args.save_t2v
         self.VERBOSE_MODE = args.verbose_mode
         self.LOGS_PATH = args.logs_path
-        self.DL_FRAMEWORK = 'tensorflow' if not args.dl_framework else args.dl_framework
+        self.DL_FRAMEWORK = 'keras' # if not args.dl_framework else args.dl_framework
         self.USE_TENSORBOARD = args.use_tensorboard
 
     def __init__(self, set_defaults: bool = False, load_from_args: bool = False, verify: bool = False):
