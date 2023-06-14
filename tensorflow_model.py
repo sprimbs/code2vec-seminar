@@ -277,6 +277,39 @@ class Code2VecModel(Code2VecModelBase):
 
         return input_tensors, code_vectors
 
+    def _build_tf_fine_tune_test_graph(self, input_tensors, trainable=False):
+        # Use `_TFTrainModelInputTensorsFormer` to access input tensors by name.
+        input_tensors = _TFEvaluateModelInputTensorsFormer().from_model_input_form(input_tensors)
+        # shape of (batch, 1) for input_tensors.target_index
+        # shape of (batch, max_contexts) for others:
+        #   input_tensors.path_source_token_indices, input_tensors.path_indices,
+        #   input_tensors.path_target_token_indices, input_tensors.context_valid_mask
+
+        with tf.compat.v1.variable_scope('model',reuse=self.get_should_reuse_variables()):
+            tokens_vocab = tf.compat.v1.get_variable(
+                self.vocab_type_to_tf_variable_name_mapping[VocabType.Token],
+                shape=(self.vocabs.token_vocab.size, self.config.TOKEN_EMBEDDINGS_SIZE), dtype=tf.float32,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"),
+                trainable=trainable)
+
+            attention_param = tf.compat.v1.get_variable(
+                'ATTENTION',
+                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=trainable)
+            paths_vocab = tf.compat.v1.get_variable(
+                self.vocab_type_to_tf_variable_name_mapping[VocabType.Path],
+                shape=(self.vocabs.path_vocab.size, self.config.PATH_EMBEDDINGS_SIZE), dtype=tf.float32,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"),
+                trainable=trainable)
+
+            code_vectors, _ = self._calculate_weighted_contexts(
+                tokens_vocab, paths_vocab, attention_param, input_tensors.path_source_token_indices,
+                input_tensors.path_indices, input_tensors.path_target_token_indices, input_tensors.context_valid_mask,
+                trainable=trainable)
+
+        return input_tensors, code_vectors
+
     def _calculate_weighted_contexts(self, tokens_vocab, paths_vocab, attention_param, source_input, path_input,
                                      target_input, valid_mask, add_layer=None, is_evaluating=False, trainable=True):
         source_word_embed = tf.nn.embedding_lookup(params=tokens_vocab, ids=source_input)  # (batch, max_contexts, dim)
