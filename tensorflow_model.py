@@ -233,7 +233,6 @@ class Code2VecModel(Code2VecModelBase):
                 input_tensors.path_indices, input_tensors.path_target_token_indices, input_tensors.context_valid_mask,
                 trainable=True)
 
-
             logits = tf.matmul(code_vectors, targets_vocab, transpose_b=True)
             batch_size = tf.cast(tf.shape(input_tensors.target_index)[0], dtype=tf.float32)
 
@@ -244,6 +243,44 @@ class Code2VecModel(Code2VecModelBase):
             optimizer = tf.compat.v1.train.AdamOptimizer().minimize(loss)
 
         return optimizer, loss
+
+    def _build_tf_fine_tune_training_graph(self, input_tensors, trainable=False):
+        # Use `_TFTrainModelInputTensorsFormer` to access input tensors by name.
+        input_tensors = _TFTrainModelInputTensorsFormer().from_model_input_form(input_tensors)
+        # shape of (batch, 1) for input_tensors.target_index
+        # shape of (batch, max_contexts) for others:
+        #   input_tensors.path_source_token_indices, input_tensors.path_indices,
+        #   input_tensors.path_target_token_indices, input_tensors.context_valid_mask
+
+        with tf.compat.v1.variable_scope('model'):
+            tokens_vocab = tf.compat.v1.get_variable(
+                self.vocab_type_to_tf_variable_name_mapping[VocabType.Token],
+                shape=(self.vocabs.token_vocab.size, self.config.TOKEN_EMBEDDINGS_SIZE), dtype=tf.float32,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"),
+                trainable=trainable)
+            targets_vocab = tf.compat.v1.get_variable(
+                self.vocab_type_to_tf_variable_name_mapping[VocabType.Target],
+                shape=(self.vocabs.target_vocab.size, self.config.TARGET_EMBEDDINGS_SIZE), dtype=tf.float32,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"),
+                trainable=trainable)
+            attention_param = tf.compat.v1.get_variable(
+                'ATTENTION',
+                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=True)
+            paths_vocab = tf.compat.v1.get_variable(
+                self.vocab_type_to_tf_variable_name_mapping[VocabType.Path],
+                shape=(self.vocabs.path_vocab.size, self.config.PATH_EMBEDDINGS_SIZE), dtype=tf.float32,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"),
+                trainable=trainable)
+
+            code_vectors, _ = self._calculate_weighted_contexts(
+                tokens_vocab, paths_vocab, attention_param, input_tensors.path_source_token_indices,
+                input_tensors.path_indices, input_tensors.path_target_token_indices, input_tensors.context_valid_mask,
+                trainable=trainable)
+
+        return code_vectors
 
     def _calculate_weighted_contexts(self, tokens_vocab, paths_vocab, attention_param, source_input, path_input,
                                      target_input, valid_mask, add_layer=None, is_evaluating=False, trainable=True):
@@ -301,7 +338,6 @@ class Code2VecModel(Code2VecModelBase):
             input_tensors = _TFEvaluateModelInputTensorsFormer().from_model_input_form(input_tensors)
             # shape of (batch, 1) for input_tensors.target_string
             # shape of (batch, max_contexts) for the other tensors
-
 
             code_vectors, attention_weights = self._calculate_weighted_contexts(
                 tokens_vocab, paths_vocab, attention_param, input_tensors.path_source_token_indices,
