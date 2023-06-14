@@ -259,15 +259,10 @@ class Code2VecModel(Code2VecModelBase):
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"),
                 trainable=trainable)
-            targets_vocab = tf.compat.v1.get_variable(
-                self.vocab_type_to_tf_variable_name_mapping[VocabType.Target],
-                shape=(self.vocabs.target_vocab.size, self.config.TARGET_EMBEDDINGS_SIZE), dtype=tf.float32,
-                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
-                                                                       distribution="uniform"),
-                trainable=trainable)
+
             attention_param = tf.compat.v1.get_variable(
                 'ATTENTION',
-                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=True)
+                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=trainable)
             paths_vocab = tf.compat.v1.get_variable(
                 self.vocab_type_to_tf_variable_name_mapping[VocabType.Path],
                 shape=(self.vocabs.path_vocab.size, self.config.PATH_EMBEDDINGS_SIZE), dtype=tf.float32,
@@ -280,7 +275,7 @@ class Code2VecModel(Code2VecModelBase):
                 input_tensors.path_indices, input_tensors.path_target_token_indices, input_tensors.context_valid_mask,
                 trainable=trainable)
 
-        return code_vectors
+        return input_tensors, code_vectors
 
     def _calculate_weighted_contexts(self, tokens_vocab, paths_vocab, attention_param, source_input, path_input,
                                      target_input, valid_mask, add_layer=None, is_evaluating=False, trainable=True):
