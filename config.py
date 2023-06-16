@@ -41,10 +41,11 @@ class Config:
                             help="path to store logs into. if not given logs are not saved to file.")
         parser.add_argument('-tb', '--tensorboard', dest='use_tensorboard', action='store_true',
                             help='use tensorboard during training')
+        parser.add_argument('--p', '--pretrained-model',dest='pretrained_model',   help='use a pretrained model as starting point')
         return parser
 
     def set_defaults(self):
-        self.NUM_TRAIN_EPOCHS = 200
+        self.NUM_TRAIN_EPOCHS = 1
         self.SAVE_EVERY_EPOCHS = 1
         self.TRAIN_BATCH_SIZE = 16
         self.TEST_BATCH_SIZE = self.TRAIN_BATCH_SIZE
@@ -68,6 +69,7 @@ class Config:
         self.TARGET_EMBEDDINGS_SIZE = self.CODE_VECTOR_SIZE
         self.DROPOUT_KEEP_RATE = 0.75
         self.SEPARATE_OOV_AND_PAD = False
+        self.PRETRAINED_MODEL=None
 
     def load_from_args(self):
         args = self.arguments_parser().parse_args()
@@ -85,6 +87,7 @@ class Config:
         self.LOGS_PATH = args.logs_path
         self.DL_FRAMEWORK =  "tensorflow" if not args.dl_framework else args.dl_framework
         self.USE_TENSORBOARD = args.use_tensorboard
+        self.PRETRAINED_MODEL = args.pretrained_model
 
     def __init__(self, set_defaults: bool = False, load_from_args: bool = False, verify: bool = False):
         self.NUM_TRAIN_EPOCHS: int = 0
@@ -152,7 +155,7 @@ class Config:
 
     @property
     def is_loading(self) -> bool:
-        return False #bool(self.MODEL_LOAD_PATH)
+        return bool(self.MODEL_LOAD_PATH)
 
     @property
     def is_saving(self) -> bool:

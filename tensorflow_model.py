@@ -128,7 +128,8 @@ class Code2VecModel(Code2VecModelBase):
                 self.eval_code_vectors = self._build_tf_test_graph(input_tensors)
             if self.saver is None:
                 self.saver = tf.compat.v1.train.Saver()
-
+        if self.config.PRETRAINED_MODEL:
+            self._initialize_session_variables()
         if self.config.MODEL_LOAD_PATH and not self.config.TRAIN_DATA_PATH_PREFIX:
             self._initialize_session_variables()
             self._load_inner_model(self.sess)
@@ -452,6 +453,12 @@ class Code2VecModel(Code2VecModelBase):
         if sess is not None:
             self.log('Loading model weights from: ' + self.config.MODEL_LOAD_PATH)
             self.saver.restore(sess, self.config.MODEL_LOAD_PATH)
+            self.log('Done loading model weights')
+
+    def _load_pretrained_model(self, sess=None):
+        if sess is not None:
+            self.log('Loading pretrained model weights from: ' + self.config.PRETRAINED_MODEL)
+            self.saver.restore(sess, self.config.PRETRAINED_MODEL)
             self.log('Done loading model weights')
 
     def _get_vocab_embedding_as_np_array(self, vocab_type: VocabType) -> np.ndarray:
