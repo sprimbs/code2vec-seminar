@@ -2,7 +2,8 @@ import time
 from functools import partial
 from typing import Optional
 
-from keras import Model
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 from common import common
 from config import Config
@@ -66,8 +67,9 @@ class FinetuneModel(Code2VecModel):
                 batch_num += 1
 
                 # Actual training for the current batch.
+                x = tf.compat.v1.placeholder('int32', shape=[None, 784])
                 _, batch_loss = self.sess.run([optimizer, train_loss])
-                self.sess.run(input_iterator_reset_op)
+                #self.sess.run(input_iterator_reset_op)
 
                 sum_loss += batch_loss
                 if batch_num % self.config.NUM_BATCHES_TO_LOG_PROGRESS == 0:
@@ -91,7 +93,7 @@ class FinetuneModel(Code2VecModel):
                     ))
                     if epoch_num == self.config.NUM_TRAIN_EPOCHS:
                         break
-                print(batch_loss)
+                #print(batch_loss)
 
         except tf.errors.OutOfRangeError as err:
             print(err)
@@ -107,16 +109,16 @@ class FinetuneModel(Code2VecModel):
         with tf.compat.v1.variable_scope('model2'):
             targets_vocab = tf.compat.v1.get_variable(
                 "TARGETS",
-                shape=(self.vocabs.target_vocab.size, self.config.TARGET_EMBEDDINGS_SIZE), dtype=tf.float32,
+                shape=(self.config.CODE_VECTOR_SIZE, 3*384), dtype=tf.float32,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
             targets_vocab2 = tf.compat.v1.get_variable(
                 "TARGETS2",
-                shape=(self.config.TARGET_EMBEDDINGS_SIZE, self.config.TARGET_EMBEDDINGS_SIZE), dtype=tf.float32,
+                shape=(3*384, self.vocabs.target_vocab.size), dtype=tf.float32,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
-            intermediate = tf.matmul(targets_vocab, targets_vocab2)
-            logits = tf.matmul(code_vectors, intermediate, transpose_b=True)
+            intermediate = tf.sigmoid(tf.matmul(code_vectors, targets_vocab))
+            logits = tf.sigmoid(tf.matmul(intermediate, targets_vocab2))
             batch_size = tf.cast(tf.shape(input_tensors.target_index)[0], dtype=tf.float32)
 
             loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -222,22 +224,22 @@ class FinetuneModel(Code2VecModel):
         with tf.compat.v1.variable_scope('model2', reuse=self.get_should_reuse_variables()):
             targets_vocab = tf.compat.v1.get_variable(
                 "TARGETS",
-                shape=(self.vocabs.target_vocab.size, self.config.TARGET_EMBEDDINGS_SIZE), dtype=tf.float32,
+                shape=(self.config.CODE_VECTOR_SIZE, 3*384), dtype=tf.float32,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
             targets_vocab2 = tf.compat.v1.get_variable(
                 "TARGETS2",
-                shape=(self.config.TARGET_EMBEDDINGS_SIZE, self.config.TARGET_EMBEDDINGS_SIZE), dtype=tf.float32,
+                shape=(3*384, self.vocabs.target_vocab.size), dtype=tf.float32,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
-            intermediate = tf.matmul(targets_vocab, targets_vocab2)
+            intermediate = tf.sigmoid(tf.matmul(code_vectors, targets_vocab))
 
             # Use `_TFEvaluateModelInputTensorsFormer` to access input tensors by name.
             #input_tensors = _TFEvaluateModelInputTensorsFormer().from_model_input_form(input_tensors)
             # shape of (batch, 1) for input_tensors.target_string
             # shape of (batch, max_contexts) for the other tensors
 
-        scores = tf.matmul(code_vectors, intermediate, transpose_b=True)
+        scores = tf.sigmoid(tf.matmul(intermediate, targets_vocab2))
 
         topk_candidates = tf.nn.top_k(scores, k=tf.minimum(
             self.config.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION, self.vocabs.target_vocab.size))
