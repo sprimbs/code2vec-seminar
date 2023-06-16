@@ -34,7 +34,7 @@ class FinetuneModel(Code2VecModel):
         #   input_tensors.path_source_token_indices, input_tensors.path_indices,
         #   input_tensors.path_target_token_indices, input_tensors.context_valid_mask
 
-        with tf.compat.v1.variable_scope('model'):
+        with tf.compat.v1.variable_scope('model',reuse=True):
             tokens_vocab = tf.compat.v1.get_variable(
                 self.vocab_type_to_tf_variable_name_mapping[VocabType.Token],
                 shape=(self.vocabs.token_vocab.size, self.config.TOKEN_EMBEDDINGS_SIZE), dtype=tf.float32,
@@ -130,7 +130,7 @@ class FinetuneModel(Code2VecModel):
             # shape of (batch, 1) for input_tensors.target_string
             # shape of (batch, max_contexts) for the other tensors
 
-        scores = tf.sigmoid(tf.matmul(intermediate, targets_vocab2))
+        scores = tf.matmul(intermediate, targets_vocab2)
 
         topk_candidates = tf.nn.top_k(scores, k=tf.minimum(
             self.config.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION, self.vocabs.target_vocab.size))
@@ -149,11 +149,13 @@ class FinetuneModel(Code2VecModel):
         self._initialize_session_variables()
         return super().evaluate()
 
+    def _load_pretrained_model(self, sess=None):
+        pass
+
 if __name__ == "__main__":
     config = Config(set_defaults=True, load_from_args=True, verify=True)
     pretrained_model = Code2VecModel(config)
-    pretrained_model._load_pretrained_model()
-    pretrained_model._initialize_session_variables()
+    pretrained_model.initialize_finetuning()
     fine_model = FinetuneModel(pretrained_model, config)
     fine_model.train()
     # pretrained_model.training_status = False
