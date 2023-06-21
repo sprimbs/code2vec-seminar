@@ -8,7 +8,7 @@ END=$5
 TEST_STATS=test-stats
 SAVE_DIR=$TEST_STATS/$DATASET_NAME
 MODEL=models/$DATASET_NAME/$MODEL_NAME/
-TEST_SET=data/$DATASET_NAME/$TAG$DATASET_NAME.$EVALUATION_SET.c2v
+TEST_SET=data/$DATASET_NAME/$DATASET_NAME.$EVALUATION_SET.c2v
 EXPORT_FILE_PATH=$SAVE_DIR/metrics.txt
 EXPORT_CSV_FILE_PATH=$MODEL/metrics-$EVALUATION_SET.csv
 
@@ -19,7 +19,7 @@ do
    echo "|| Checkpoint $i: ||"
    echo "==================="
    CHECKPOINT=$SAVE_DIR/checkpoint"$i".txt
-   python code2vec.py --load "$MODEL"/saved_model_iter"$i" --test "$TEST_SET"  > "$CHECKPOINT" 2>/dev/null
+   python code2vec.py --load "$MODEL"/saved_model_iter"$i" --test "$TEST_SET"  > "$CHECKPOINT"  2>/dev/null
     searchstring='precision'
    t=$(ls -l | grep $searchstring "$CHECKPOINT")
    prefix=${t%%$searchstring*}

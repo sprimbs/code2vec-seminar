@@ -18,7 +18,7 @@ tf.compat.v1.disable_eager_execution()
 
 class Code2VecModel(Code2VecModelBase):
     def __init__(self, config: Config):
-
+        self.saver = None
         self.sess = tf.compat.v1.Session()
 
         self.eval_reader = None
@@ -92,7 +92,19 @@ class Code2VecModel(Code2VecModelBase):
             self.log("variable name: {} -- shape: {} -- #params: {}".format(
                 variable.name, variable.get_shape(), np.prod(variable.get_shape().as_list())))
 
-        self._initialize_session_variables()
+        if not self.config.PRETRAINED_MODEL:
+            self._initialize_session_variables()
+        else:
+            uninitialized_vars = []
+            for var in tf.compat.v1.global_variables():
+                try:
+                    self.sess.run(var)
+                except tf.errors.FailedPreconditionError:
+                    uninitialized_vars.append(var)
+            self.sess.run(tf.group(
+                tf.compat.v1.initialize_variables(uninitialized_vars),
+                tf.compat.v1.local_variables_initializer(),
+                tf.compat.v1.tables_initializer()))
 
         if self.config.MODEL_LOAD_PATH:
             self._load_inner_model(self.sess)
@@ -101,6 +113,7 @@ class Code2VecModel(Code2VecModelBase):
         self.sess.run(input_iterator_reset_op)
         time.sleep(1)
         self.log('Started reader...')
+
         # run evaluation in a loop until iterator is exhausted.
         try:
             while True:
@@ -161,7 +174,16 @@ class Code2VecModel(Code2VecModelBase):
             if self.saver is None:
                 self.saver = tf.compat.v1.train.Saver()
         if self.config.PRETRAINED_MODEL:
-            self._initialize_session_variables()
+            uninitialized_vars = []
+            for var in tf.compat.v1.global_variables():
+                try:
+                    self.sess.run(var)
+                except tf.errors.FailedPreconditionError:
+                    uninitialized_vars.append(var)
+            self.sess.run(tf.group(
+                tf.compat.v1.initialize_variables(uninitialized_vars),
+                tf.compat.v1.local_variables_initializer(),
+                tf.compat.v1.tables_initializer()))
         if self.config.MODEL_LOAD_PATH and not self.config.TRAIN_DATA_PATH_PREFIX:
             self._initialize_session_variables()
             self._load_inner_model(self.sess)
@@ -251,9 +273,11 @@ class Code2VecModel(Code2VecModelBase):
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"),
                 trainable=trainable)
-            attention_param = tf.compat.v1.get_variable(
+            self.attention_param = tf.compat.v1.get_variable(
                 'ATTENTION',
-                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=trainable)
+                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=trainable,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"),)
             paths_vocab = tf.compat.v1.get_variable(
                 self.vocab_type_to_tf_variable_name_mapping[VocabType.Path],
                 shape=(self.vocabs.path_vocab.size, self.config.PATH_EMBEDDINGS_SIZE), dtype=tf.float32,
@@ -262,7 +286,7 @@ class Code2VecModel(Code2VecModelBase):
                 trainable=trainable)
 
             code_vectors, _ = self._calculate_weighted_contexts(
-                    tokens_vocab, paths_vocab, attention_param, input_tensors.path_source_token_indices,
+                    tokens_vocab, paths_vocab, self.attention_param, input_tensors.path_source_token_indices,
                     input_tensors.path_indices, input_tensors.path_target_token_indices, input_tensors.context_valid_mask,
                     trainable=trainable)
 
@@ -362,7 +386,8 @@ class Code2VecModel(Code2VecModelBase):
 
         flat_embed = tf.tanh(tf.matmul(flat_embed, transform_param))  # (batch * max_contexts, dim * 3)
 
-        contexts_weights = tf.matmul(flat_embed, attention_param)  # (batch * max_contexts, 1)
+        contexts_weights = tf.matmul(flat_embed, attention_param)
+        # (batch * max_contexts, 1)
         batched_contexts_weights = tf.reshape(
             contexts_weights, [-1, self.config.MAX_CONTEXTS, 1])  # (batch, max_contexts, 1)
         mask = tf.math.log(valid_mask)  # (batch, max_contexts)

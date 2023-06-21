@@ -3,6 +3,7 @@ from functools import partial
 from typing import Optional
 
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 from common import common
@@ -21,7 +22,7 @@ class FinetuneModel(Code2VecModel):
     def __init__(self, pretrained_model: Code2VecModel, config, *args, **kwargs):
         super().__init__(config)
         self.pretrained_model = pretrained_model
-        self.sess = tf.compat.v1.Session()
+        self.sess = pretrained_model.sess
         self.log = config.get_logger().info
         self.config = config
         self.vocabs = Code2VecVocabs(config)
@@ -34,7 +35,7 @@ class FinetuneModel(Code2VecModel):
         #   input_tensors.path_source_token_indices, input_tensors.path_indices,
         #   input_tensors.path_target_token_indices, input_tensors.context_valid_mask
 
-        with tf.compat.v1.variable_scope('model',reuse=True):
+        with tf.compat.v1.variable_scope('model', reuse=True):
             tokens_vocab = tf.compat.v1.get_variable(
                 self.vocab_type_to_tf_variable_name_mapping[VocabType.Token],
                 shape=(self.vocabs.token_vocab.size, self.config.TOKEN_EMBEDDINGS_SIZE), dtype=tf.float32,
@@ -44,7 +45,7 @@ class FinetuneModel(Code2VecModel):
 
             attention_param = tf.compat.v1.get_variable(
                 'ATTENTION',
-                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=trainable)
+                shape=(self.config.CODE_VECTOR_SIZE, 1), dtype=tf.float32, trainable=False)
             paths_vocab = tf.compat.v1.get_variable(
                 self.vocab_type_to_tf_variable_name_mapping[VocabType.Path],
                 shape=(self.vocabs.path_vocab.size, self.config.PATH_EMBEDDINGS_SIZE), dtype=tf.float32,
@@ -60,12 +61,12 @@ class FinetuneModel(Code2VecModel):
         with tf.compat.v1.variable_scope('model2'):
             targets_vocab = tf.compat.v1.get_variable(
                 "TARGETS",
-                shape=(self.config.CODE_VECTOR_SIZE, 3*384), dtype=tf.float32,
+                shape=(self.config.CODE_VECTOR_SIZE, 3 * 384), dtype=tf.float32,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
             targets_vocab2 = tf.compat.v1.get_variable(
                 "TARGETS2",
-                shape=(3*384, self.vocabs.target_vocab.size), dtype=tf.float32,
+                shape=(3 * 384, self.vocabs.target_vocab.size), dtype=tf.float32,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
             intermediate = tf.sigmoid(tf.matmul(code_vectors, targets_vocab))
@@ -144,19 +145,26 @@ class FinetuneModel(Code2VecModel):
         return top_words, top_scores, original_words, _, input_tensors.path_source_token_strings, \
             input_tensors.path_strings, input_tensors.path_target_token_strings, code_vectors
 
-
     def evaluate(self) -> Optional[ModelEvaluationResults]:
-        self._initialize_session_variables()
+        # self._initialize_session_variables()
         return super().evaluate()
 
     def _load_pretrained_model(self, sess=None):
         pass
 
+
 if __name__ == "__main__":
     config = Config(set_defaults=True, load_from_args=True, verify=True)
     pretrained_model = Code2VecModel(config)
     pretrained_model.initialize_finetuning()
+    with tf.compat.v1.variable_scope("model", reuse=True):
+        w = tf.compat.v1.get_variable(pretrained_model.vocab_type_to_tf_variable_name_mapping[VocabType.Path])
+        x = w.eval(session=pretrained_model.sess)
     fine_model = FinetuneModel(pretrained_model, config)
     fine_model.train()
+    with tf.compat.v1.variable_scope("model", reuse=True):
+        w = tf.compat.v1.get_variable(pretrained_model.vocab_type_to_tf_variable_name_mapping[VocabType.Path])
+        y = w.eval(session=fine_model.sess)
+    print(f" {x==y}")
     # pretrained_model.training_status = False
     # model = FinetuneModel(pretrained_model)

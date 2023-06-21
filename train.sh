@@ -7,7 +7,7 @@
 #   will be evaluated after each training iteration. If you wish to test
 #   on the final (held-out) test set, change 'val' to 'test'.
 tag=""
-type=gender/$tag
+type=gender/pretrained/$tag
 dataset_name=gender
 data_dir=data/${dataset_name}/$tag
 data=${data_dir}/${dataset_name}
@@ -18,4 +18,4 @@ python=python
 
 mkdir -p ${model_dir}
 set -e
-${python}  code2vec.py --data ${data} --test ${test_data} --save ${model_dir}/saved_model   #-l models/sprites/600_000/saved_model_iter8
+${python}  code2vec.py --data ${data} --test ${test_data} --save ${model_dir}/saved_model   --pretrained-model models/sprites/600_000/saved_model_iter18

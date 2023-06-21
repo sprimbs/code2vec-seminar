@@ -45,9 +45,9 @@ class Config:
         return parser
 
     def set_defaults(self):
-        self.NUM_TRAIN_EPOCHS = 20
+        self.NUM_TRAIN_EPOCHS = 100
         self.SAVE_EVERY_EPOCHS = 1
-        self.TRAIN_BATCH_SIZE = 512
+        self.TRAIN_BATCH_SIZE = 16
         self.TEST_BATCH_SIZE = self.TRAIN_BATCH_SIZE
         self.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION = 10
         self.NUM_BATCHES_TO_LOG_PROGRESS = 100
