@@ -41,7 +41,7 @@ class FinetuneModel(Code2VecModel):
                 shape=(self.vocabs.token_vocab.size, self.config.TOKEN_EMBEDDINGS_SIZE), dtype=tf.float32,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"),
-                trainable=trainable)
+                trainable=False)
 
             attention_param = tf.compat.v1.get_variable(
                 'ATTENTION',
@@ -51,7 +51,7 @@ class FinetuneModel(Code2VecModel):
                 shape=(self.vocabs.path_vocab.size, self.config.PATH_EMBEDDINGS_SIZE), dtype=tf.float32,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"),
-                trainable=trainable)
+                trainable=False)
 
             code_vectors, _ = self._calculate_weighted_contexts(
                 tokens_vocab, paths_vocab, attention_param, input_tensors.path_source_token_indices,
@@ -61,16 +61,12 @@ class FinetuneModel(Code2VecModel):
         with tf.compat.v1.variable_scope('model2'):
             targets_vocab = tf.compat.v1.get_variable(
                 "TARGETS",
-                shape=(self.config.CODE_VECTOR_SIZE, 3 * 384), dtype=tf.float32,
+                shape=(self.config.CODE_VECTOR_SIZE, self.vocabs.target_vocab.size), dtype=tf.float32, trainable=True,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
-            targets_vocab2 = tf.compat.v1.get_variable(
-                "TARGETS2",
-                shape=(3 * 384, self.vocabs.target_vocab.size), dtype=tf.float32,
-                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
-                                                                       distribution="uniform"))
-            intermediate = tf.sigmoid(tf.matmul(code_vectors, targets_vocab))
-            logits = tf.sigmoid(tf.matmul(intermediate, targets_vocab2))
+
+            intermediate = tf.matmul(code_vectors, targets_vocab)
+            logits = tf.matmul(code_vectors, targets_vocab)
             batch_size = tf.cast(tf.shape(input_tensors.target_index)[0], dtype=tf.float32)
 
             loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -90,7 +86,7 @@ class FinetuneModel(Code2VecModel):
         #   input_tensors.path_source_token_indices, input_tensors.path_indices,
         #   input_tensors.path_target_token_indices, input_tensors.context_valid_mask
 
-        with tf.compat.v1.variable_scope('model', reuse=self.get_should_reuse_variables()):
+        with tf.compat.v1.variable_scope('model', reuse=True):
             tokens_vocab = tf.compat.v1.get_variable(
                 self.vocab_type_to_tf_variable_name_mapping[VocabType.Token],
                 shape=(self.vocabs.token_vocab.size, self.config.TOKEN_EMBEDDINGS_SIZE), dtype=tf.float32,
@@ -111,27 +107,23 @@ class FinetuneModel(Code2VecModel):
             code_vectors, _ = self._calculate_weighted_contexts(
                 tokens_vocab, paths_vocab, attention_param, input_tensors.path_source_token_indices,
                 input_tensors.path_indices, input_tensors.path_target_token_indices, input_tensors.context_valid_mask,
-                trainable=trainable)
+                trainable=trainable, is_evaluating=True)
 
         with tf.compat.v1.variable_scope('model2', reuse=self.get_should_reuse_variables()):
             targets_vocab = tf.compat.v1.get_variable(
                 "TARGETS",
-                shape=(self.config.CODE_VECTOR_SIZE, 3 * 384), dtype=tf.float32,
+                shape=(self.config.CODE_VECTOR_SIZE,  self.vocabs.target_vocab.size), dtype=tf.float32, trainable=False,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
-            targets_vocab2 = tf.compat.v1.get_variable(
-                "TARGETS2",
-                shape=(3 * 384, self.vocabs.target_vocab.size), dtype=tf.float32,
-                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
-                                                                       distribution="uniform"))
-            intermediate = tf.sigmoid(tf.matmul(code_vectors, targets_vocab))
+
+
 
             # Use `_TFEvaluateModelInputTensorsFormer` to access input tensors by name.
             # input_tensors = _TFEvaluateModelInputTensorsFormer().from_model_input_form(input_tensors)
             # shape of (batch, 1) for input_tensors.target_string
             # shape of (batch, max_contexts) for the other tensors
 
-        scores = tf.matmul(intermediate, targets_vocab2)
+        scores = tf.matmul(code_vectors, targets_vocab)
 
         topk_candidates = tf.nn.top_k(scores, k=tf.minimum(
             self.config.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION, self.vocabs.target_vocab.size))
@@ -145,26 +137,43 @@ class FinetuneModel(Code2VecModel):
         return top_words, top_scores, original_words, _, input_tensors.path_source_token_strings, \
             input_tensors.path_strings, input_tensors.path_target_token_strings, code_vectors
 
-    def evaluate(self) -> Optional[ModelEvaluationResults]:
-        # self._initialize_session_variables()
-        return super().evaluate()
 
-    def _load_pretrained_model(self, sess=None):
-        pass
 
 
 if __name__ == "__main__":
     config = Config(set_defaults=True, load_from_args=True, verify=True)
     pretrained_model = Code2VecModel(config)
-    pretrained_model.initialize_finetuning()
-    with tf.compat.v1.variable_scope("model", reuse=True):
-        w = tf.compat.v1.get_variable(pretrained_model.vocab_type_to_tf_variable_name_mapping[VocabType.Path])
-        x = w.eval(session=pretrained_model.sess)
-    fine_model = FinetuneModel(pretrained_model, config)
-    fine_model.train()
-    with tf.compat.v1.variable_scope("model", reuse=True):
-        w = tf.compat.v1.get_variable(pretrained_model.vocab_type_to_tf_variable_name_mapping[VocabType.Path])
-        y = w.eval(session=fine_model.sess)
-    print(f" {x==y}")
+
+
+
+    if config.is_training:
+        pretrained_model.initialize_finetuning()
+
+        fine_model = FinetuneModel(pretrained_model, config)
+        fine_model.train()
+
+        fine_model.close_session()
+
+    if (config.is_testing and not config.is_training) or config.RELEASE:
+
+        pretrained_model.initialize_finetuning_test_mode()
+
+        fine_model = FinetuneModel(pretrained_model, config)
+
+        eval_results = fine_model.evaluate()
+        with tf.compat.v1.variable_scope("model2", reuse=True):
+            w = tf.compat.v1.get_variable("TARGETS")
+            x=w.eval(session=pretrained_model.sess)
+        eval_results = fine_model.evaluate()
+
+        with tf.compat.v1.variable_scope("model2", reuse=True):
+            w = tf.compat.v1.get_variable("TARGETS")
+            y=w.eval(session=fine_model.sess)
+            print(f"{x==y}")
+        if eval_results is not None:
+            config.log(
+                str(eval_results).replace('topk', 'top{}'.format(config.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION)))
+
+        fine_model.close_session()
     # pretrained_model.training_status = False
     # model = FinetuneModel(pretrained_model)

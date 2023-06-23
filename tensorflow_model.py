@@ -66,6 +66,22 @@ class Code2VecModel(Code2VecModelBase):
         time.sleep(1)
         self.log('Initialization is done.')
 
+    def initialize_finetuning_test_mode(self) -> None:
+        if self.eval_reader is None:
+            self.eval_reader = PathContextReader(vocabs=self.vocabs,
+                                                 model_input_tensors_former=_TFEvaluateModelInputTensorsFormer(),
+                                                 config=self.config, estimator_action=EstimatorAction.Evaluate)
+            input_iterator = tf.compat.v1.data.make_initializable_iterator(self.eval_reader.get_dataset())
+            self.eval_input_iterator_reset_op = input_iterator.initializer
+            input_tensors = input_iterator.get_next()
+
+            _ = self._build_tf_test_graph(input_tensors)
+            if self.saver is None:
+                self.saver = tf.compat.v1.train.Saver()
+        self._initialize_session_variables()
+        if self.config.PRETRAINED_MODEL:
+            self.load_pretrained_model()
+
 
     def train(self):
         self.log('Starting training')
