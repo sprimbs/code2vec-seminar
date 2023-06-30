@@ -19,7 +19,7 @@ do
    echo "|| Checkpoint $i: ||"
    echo "==================="
    CHECKPOINT=$SAVE_DIR/checkpoint"$i".txt
-   python finetune_model.py --load "$MODEL"/saved_model_iter"$i" --test "$TEST_SET" --pretrained-model models/sprites/200_000/saved_model_iter49.release > "$CHECKPOINT"  2>/dev/null
+   python finetune_model.py --load "$MODEL"/saved_model_iter"$i" --test "$TEST_SET" --pretrained-model models/sprite-models/model-600k/model-600k > "$CHECKPOINT"  2>/dev/null
     searchstring='precision'
    t=$(ls -l | grep $searchstring "$CHECKPOINT")
    prefix=${t%%$searchstring*}
