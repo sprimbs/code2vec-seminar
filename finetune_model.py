@@ -56,17 +56,23 @@ class FinetuneModel(Code2VecModel):
             code_vectors, _ = self._calculate_weighted_contexts(
                 tokens_vocab, paths_vocab, attention_param, input_tensors.path_source_token_indices,
                 input_tensors.path_indices, input_tensors.path_target_token_indices, input_tensors.context_valid_mask,
-                trainable=trainable)
+                trainable=False)
 
-        with tf.compat.v1.variable_scope('model2'):
+        with tf.compat.v1.variable_scope('fine-tune-model'):
             targets_vocab = tf.compat.v1.get_variable(
                 "TARGETS",
-                shape=(self.config.CODE_VECTOR_SIZE, self.vocabs.target_vocab.size), dtype=tf.float32, trainable=True,
+                shape=(self.config.CODE_VECTOR_SIZE,self.config.DEFAULT_EMBEDDINGS_SIZE), dtype=tf.float32, trainable=True,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
 
-            intermediate = tf.matmul(code_vectors, targets_vocab)
-            logits = tf.matmul(code_vectors, targets_vocab)
+            targets_vocab3 = tf.compat.v1.get_variable(
+                "TARGETS2",
+                shape=(self.config.DEFAULT_EMBEDDINGS_SIZE, self.vocabs.target_vocab.size), dtype=tf.float32, trainable=True,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"))
+
+            intermediate = tf.tanh(tf.matmul(code_vectors, targets_vocab))
+            logits = tf.matmul(intermediate, targets_vocab3)
             batch_size = tf.cast(tf.shape(input_tensors.target_index)[0], dtype=tf.float32)
 
             loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -109,21 +115,27 @@ class FinetuneModel(Code2VecModel):
                 input_tensors.path_indices, input_tensors.path_target_token_indices, input_tensors.context_valid_mask,
                 trainable=trainable, is_evaluating=True)
 
-        with tf.compat.v1.variable_scope('model2', reuse=self.get_should_reuse_variables()):
+        with tf.compat.v1.variable_scope('fine-tune-model', reuse=self.get_should_reuse_variables()):
             targets_vocab = tf.compat.v1.get_variable(
                 "TARGETS",
-                shape=(self.config.CODE_VECTOR_SIZE,  self.vocabs.target_vocab.size), dtype=tf.float32, trainable=False,
+                shape=(self.config.CODE_VECTOR_SIZE, self.config.DEFAULT_EMBEDDINGS_SIZE), dtype=tf.float32, trainable=False,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
 
 
+            targets_vocab3 = tf.compat.v1.get_variable(
+                "TARGETS2",
+                shape=(self.config.DEFAULT_EMBEDDINGS_SIZE, self.vocabs.target_vocab.size), dtype=tf.float32, trainable=False,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"))
 
             # Use `_TFEvaluateModelInputTensorsFormer` to access input tensors by name.
             # input_tensors = _TFEvaluateModelInputTensorsFormer().from_model_input_form(input_tensors)
             # shape of (batch, 1) for input_tensors.target_string
             # shape of (batch, max_contexts) for the other tensors
 
-        scores = tf.matmul(code_vectors, targets_vocab)
+        intermediate = tf.tanh(tf.matmul(code_vectors, targets_vocab))
+        scores = tf.matmul(intermediate, targets_vocab3)
 
         topk_candidates = tf.nn.top_k(scores, k=tf.minimum(
             self.config.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION, self.vocabs.target_vocab.size))
@@ -161,15 +173,7 @@ if __name__ == "__main__":
         fine_model = FinetuneModel(pretrained_model, config)
 
         eval_results = fine_model.evaluate()
-        with tf.compat.v1.variable_scope("model2", reuse=True):
-            w = tf.compat.v1.get_variable("TARGETS")
-            x=w.eval(session=pretrained_model.sess)
-        eval_results = fine_model.evaluate()
 
-        with tf.compat.v1.variable_scope("model2", reuse=True):
-            w = tf.compat.v1.get_variable("TARGETS")
-            y=w.eval(session=fine_model.sess)
-            print(f"{x==y}")
         if eval_results is not None:
             config.log(
                 str(eval_results).replace('topk', 'top{}'.format(config.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION)))

@@ -27,7 +27,7 @@ TARGET_VOCAB_SIZE=261245
 
 PYTHON=python
 DATASET_NAME=sprites
-DATASET_PART=$DATASET_NAME/500_000
+DATASET_PART=$DATASET_NAME/100_000
 
 ###########################################################
 
@@ -44,7 +44,7 @@ mkdir -p ${PREPROCESSED_DATA_DIR}
 mkdir -p ${TMP_DATA_DIR}
 
 
-${PYTHON} dataset/relabel.py --path=${TMP_DATA_DIR} --output=${PREPROCESSED_DATA_DIR} --relabel --count=500000
+${PYTHON} dataset/relabel.py --path=${TMP_DATA_DIR} --output=${PREPROCESSED_DATA_DIR}  --count=100000
 # rm -rf ${TMP}
 
 

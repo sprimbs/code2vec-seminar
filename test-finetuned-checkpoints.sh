@@ -6,7 +6,7 @@ START=$4
 END=$5
 
 TEST_STATS=test-stats
-SAVE_DIR=$TEST_STATS/$DATASET_NAME
+SAVE_DIR=$TEST_STATS/$DATASET_NAME/$TAG
 MODEL=models/$DATASET_NAME/$MODEL_NAME/
 TEST_SET=data/$DATASET_NAME/$DATASET_NAME.$EVALUATION_SET.c2v
 EXPORT_FILE_PATH=$SAVE_DIR/metrics.txt
@@ -19,7 +19,7 @@ do
    echo "|| Checkpoint $i: ||"
    echo "==================="
    CHECKPOINT=$SAVE_DIR/checkpoint"$i".txt
-   python finetune_model.py --load "$MODEL"/saved_model_iter"$i" --test "$TEST_SET" --pretrained-model models/sprites/600_000/saved_model_iter18 > "$CHECKPOINT"  2>/dev/null
+   python finetune_model.py --load "$MODEL"/saved_model_iter"$i" --test "$TEST_SET" --pretrained-model models/sprites/200_000/saved_model_iter49.release > "$CHECKPOINT"  2>/dev/null
     searchstring='precision'
    t=$(ls -l | grep $searchstring "$CHECKPOINT")
    prefix=${t%%$searchstring*}
@@ -30,6 +30,6 @@ done
 echo "Converting to csv..."
 rm "$SAVE_DIR"/checkpoint*.txt
 python metric2csv.py --metric-file="$EXPORT_FILE_PATH" --output-file="$EXPORT_CSV_FILE_PATH"
-rm -rf "$TEST_STATS"
+rm -rf "$SAVE_DIR"
 rm "log.txt"
 echo "Finished!"

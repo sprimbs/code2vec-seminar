@@ -6,8 +6,8 @@ START=$4
 END=$5
 
 TEST_STATS=test-stats
-SAVE_DIR=$TEST_STATS/$DATASET_NAME
-MODEL=models/$DATASET_NAME/$MODEL_NAME/
+SAVE_DIR=$TEST_STATS/$DATASET_NAME/$TAG
+MODEL=models/$DATASET_NAME/$MODEL_NAME
 TEST_SET=data/$DATASET_NAME/$DATASET_NAME.$EVALUATION_SET.c2v
 EXPORT_FILE_PATH=$SAVE_DIR/metrics.txt
 EXPORT_CSV_FILE_PATH=$MODEL/metrics-$EVALUATION_SET.csv
@@ -30,6 +30,6 @@ done
 echo "Converting to csv..."
 rm "$SAVE_DIR"/checkpoint*.txt
 python metric2csv.py --metric-file="$EXPORT_FILE_PATH" --output-file="$EXPORT_CSV_FILE_PATH"
-rm -rf "$TEST_STATS"
+rm -rf "$SAVE_DIR"
 rm "log.txt"
 echo "Finished!"
