@@ -16,7 +16,7 @@
 
 ## Preprocessing
 
-Download the used dataset from [here](any-link). Unpack these and modyfy some path variables in `preprocess-pure.py`. 
+Download the used dataset from [here](any-link). Unpack these and modify some path variables in `preprocess-pure.py`. 
 If you use a `poetry` environment change the parameter value from  `python` to `poetry run python`.
 After that run 
 ```bash
@@ -27,7 +27,7 @@ This will preprocess the given data to a starting point for training.
 
 ## Creating pre-trained models
 ### Downloading pre-trained models
-The pre-trained models trained on sprites can downloaded [here]()
+The pre-trained models trained on sprites can be downloaded [here](https://drive.google.com/file/d/1TpLPNEooM17aqkgF9dI7NtJA-P2BIuRl/view?usp=sharing).
 
 ### Training an own pre-trained model (optional)
 Modify some configuration params the `train.sh` script. Then run
