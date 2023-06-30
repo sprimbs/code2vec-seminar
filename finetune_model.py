@@ -150,7 +150,7 @@ class FinetuneModel(Code2VecModel):
                                                                        distribution="uniform"))
 
             targets_vocab3 = tf.compat.v1.get_variable(
-                "TARGETS4",
+                "TARGETS3",
                 shape=(self.config.DEFAULT_EMBEDDINGS_SIZE, self.config.DEFAULT_EMBEDDINGS_SIZE), dtype=tf.float32,
                 trainable=False,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
