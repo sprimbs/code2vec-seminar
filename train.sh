@@ -18,4 +18,4 @@ python=python
 
 mkdir -p ${model_dir}
 set -e
-${python}  code2vec.py --data ${data} --test ${test_data} --save ${model_dir}/saved_model  # --pretrained-model models/sprites/600_000/saved_model_iter18
+${python}  code2vec.py --data ${data} --test ${test_data} --save ${model_dir}/saved_model 
