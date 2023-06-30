@@ -1,17 +1,10 @@
-# Code2vec
+# Code2vec - Transfer Learning for code2vec in context of scratch programs
 
 ## Requirements
 
 - Java 17
 - Python 3.8
 
-## Cloning
-
-```bash
-git clone https://gitlab.infosun.fim.uni-passau.de/se2/deepcode/code2vec.git
-cd ./code2vec/
-git clone https://gitlab.infosun.fim.uni-passau.de/se2/deepcode/preprocessing-toolbox.git
-```
 
 ## Initialization
 
@@ -20,44 +13,45 @@ git clone https://gitlab.infosun.fim.uni-passau.de/se2/deepcode/preprocessing-to
  poetry install
  ```
 
-After that find the path to the executable of the poetry interpreter. This path has to be set in the `preprocess.sh` and
-`train.sh` in order to execute everything on the correct interpreter.
-
-Now the preprocessing-toolbox must be built, therefore run:
-
-```bash
-bash build_extractor.sh
-```
 
 ## Preprocessing
 
-Move your `.java`-files or Java-repositories into `./dataset/sources` and execute 
-
+Download the used dataset from [here](any-link). Unpack these and modyfy some path variables in `preprocess-pure.py`. 
+If you use a `poetry` environment change the parameter value from  `python` to `poetry run python`.
+After that run 
 ```bash
-poetry run python ./dataset/create_train_sub_dirs.py ./dataset/sources
+bash preprocess-pure.py
 ```
 
-This will split the data into training, validation and testing.
+This will preprocess the given data to a starting point for training.
 
-Now run
+## Creating pre-trained models
+### Downloading pre-trained models
+The pre-trained models trained on sprites can downloaded [here]()
 
-```bash
-bash preprocess.sh
-```
-
-## Training
-
-Run
+### Training an own pre-trained model (optional)
+Modify some configuration params the `train.sh` script. Then run
 
 ```bash
 bash train.sh
 ```
 
-## Manual Prediction
-
-To manually examine a trained model run:
-
+## Testing scores of the pre-trained model
+To test a pre-trained model just use following command: 
 ```bash
-poetry run python predict.py --load [path to a trained model]
+[poetry run ] python code2vec.py --load [path_to_the_model] --test [path_to_the_test_data_set]
 ```
 
+## Fine-Tuning
+To use Transfer Learning you can adjust the values of the `fine-tune.sh` script. 
+Modify some params and you can start the transfer learning process.
+Run
+```bash
+bash fine-tune.sh
+```
+
+## Testing fine-tuned models. To test one ore more checkpoints of a pre-trained model, run:
+```bash
+bash test-finetuned-checkpoints.sh [DATASETNAME] [MODEL_NAME] [test-set] [start-checkpoint] [endcheckpoint]
+```
+It will evaluate each stored checkpoint and saves all metrics in a `csv` file of the model.
