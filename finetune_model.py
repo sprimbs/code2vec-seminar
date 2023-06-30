@@ -75,13 +75,21 @@ class FinetuneModel(Code2VecModel):
 
             targets_vocab3 = tf.compat.v1.get_variable(
                 "TARGETS3",
+                shape=(self.config.DEFAULT_EMBEDDINGS_SIZE, self.config.DEFAULT_EMBEDDINGS_SIZE), dtype=tf.float32,
+                trainable=True,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"))
+
+            targets_vocab4 = tf.compat.v1.get_variable(
+                "TARGETS4",
                 shape=(self.config.DEFAULT_EMBEDDINGS_SIZE, self.vocabs.target_vocab.size), dtype=tf.float32,
                 trainable=True,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
             intermediate = tf.tanh(tf.matmul(code_vectors, targets_vocab))
             intermediate2 = tf.tanh(tf.matmul(intermediate, targets_vocab2))
-            logits = tf.matmul(intermediate2, targets_vocab3)
+            intermediate3 = tf.tanh(tf.matmul(intermediate2, targets_vocab3))
+            logits = tf.matmul(intermediate3, targets_vocab4)
 
 
             batch_size = tf.cast(tf.shape(input_tensors.target_index)[0], dtype=tf.float32)
@@ -140,21 +148,29 @@ class FinetuneModel(Code2VecModel):
                 trainable=False,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
+
             targets_vocab3 = tf.compat.v1.get_variable(
-                "TARGETS2",
+                "TARGETS4",
+                shape=(self.config.DEFAULT_EMBEDDINGS_SIZE, self.config.DEFAULT_EMBEDDINGS_SIZE), dtype=tf.float32,
+                trainable=False,
+                initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
+                                                                       distribution="uniform"))
+            targets_vocab4 = tf.compat.v1.get_variable(
+                "TARGETS4",
                 shape=(self.config.DEFAULT_EMBEDDINGS_SIZE, self.vocabs.target_vocab.size), dtype=tf.float32,
                 trainable=False,
                 initializer=tf.compat.v1.initializers.variance_scaling(scale=1.0, mode='fan_out',
                                                                        distribution="uniform"))
             intermediate = tf.tanh(tf.matmul(code_vectors, targets_vocab))
             intermediate2 = tf.tanh(tf.matmul(intermediate, targets_vocab2))
+            intermediate3 = tf.tanh(tf.matmul(intermediate2, targets_vocab3))
 
             # Use `_TFEvaluateModelInputTensorsFormer` to access input tensors by name.
             # input_tensors = _TFEvaluateModelInputTensorsFormer().from_model_input_form(input_tensors)
             # shape of (batch, 1) for input_tensors.target_string
             # shape of (batch, max_contexts) for the other tensors
 
-        scores = tf.matmul(intermediate2, targets_vocab3)
+        scores = tf.matmul(intermediate3, targets_vocab4)
 
         topk_candidates = tf.nn.top_k(scores, k=tf.minimum(
             self.config.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION, self.vocabs.target_vocab.size))

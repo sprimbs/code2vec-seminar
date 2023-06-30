@@ -7,7 +7,7 @@
 #   will be evaluated after each training iteration. If you wish to test
 #   on the final (held-out) test set, change 'val' to 'test'.
 tag=""
-type=project_category/pretrained/layer3
+type=project_category/pretrained/layer4
 dataset_name=project_category
 data_dir=data/${dataset_name}/$tag
 data=${data_dir}/${dataset_name}
