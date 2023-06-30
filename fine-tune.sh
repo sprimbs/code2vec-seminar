@@ -7,8 +7,8 @@
 #   will be evaluated after each training iteration. If you wish to test
 #   on the final (held-out) test set, change 'val' to 'test'.
 tag=""
-type=gender/pretrained/$tag
-dataset_name=gender
+type=project_category/pretrained/layer1
+dataset_name=project_category
 data_dir=data/${dataset_name}/$tag
 data=${data_dir}/${dataset_name}
 test_data=${data_dir}/${dataset_name}.val.c2v
@@ -18,4 +18,4 @@ python=python
 
 mkdir -p ${model_dir}
 set -e
-${python}  finetune_model.py --data ${data} --test ${test_data} --save ${model_dir}/saved_model   --pretrained-model models/sprites/600_000/saved_model_iter18
+${python}  finetune_model.py --data ${data} --test ${test_data} --save ${model_dir}/saved_model   --pretrained-model models/sprite-models/model-600k/model-600k
